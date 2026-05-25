@@ -1,0 +1,38 @@
+name: "Cobblestone Overlay"
+srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+
+Layer:
+    -
+        id: "cobblestone_areas"
+        name: "cobblestone_areas"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "polygon"
+        Datasource:
+            type: "postgis"
+            table: "cobblestone_areas"
+            key_field: "osm_id"
+            geometry_field: "geom"
+            dbname: "o2p"
+            host: "postgis"
+            user: "o2p"
+            password: "o2p"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cobblestone_lines"
+        name: "cobblestone_lines"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "linestring"
+        Datasource:
+            type: "postgis"
+            table: "cobblestone_lines"
+            key_field: "osm_id"
+            geometry_field: "geom"
+            dbname: "o2p"
+            host: "postgis"
+            user: "o2p"
+            password: "o2p"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+Stylesheet:
+    - "style.mss"

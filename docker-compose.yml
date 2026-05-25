@@ -1,0 +1,71 @@
+services:
+    postgis:
+        image: postgis/postgis:latest
+        environment:
+            POSTGRES_DB: o2p
+            POSTGRES_USER: o2p
+            POSTGRES_PASSWORD: o2p
+        volumes:
+            - ./data/postgis:/var/lib/postgresql/data
+        healthcheck:
+            test: pg_isready -h localhost -d o2p -U o2p
+            start_period: 60s
+            start_interval: 1s
+        restart: always
+
+    osm2pgsql:
+        image: iboates/osm2pgsql
+        volumes:
+            - .:/styles:ro
+        environment:
+            PGHOST: postgis
+            PGDATABASE: o2p
+            PGUSER: o2p
+            PGPASSWORD: o2p
+            OSM2PGSQL_ARGS: -O flex -S /styles/main.lua --slim
+        links:
+            - postgis
+        depends_on:
+            postgis:
+                condition: service_healthy
+        entrypoint: ""
+        command: ["tail", "-f", "/dev/null"]
+        restart: always
+
+    cron:
+        image: docker
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./crontab:/etc/crontabs/root:ro
+        links:
+            - osm2pgsql
+        environment:
+            OSM2PGSQL_CONTAINER: tiles-osm2pgsql-1
+        command: crond -f -d 7
+        restart: always
+        profiles: [aaa]
+
+    import:
+        extends: osm2pgsql
+        volumes:
+            - ./region.osm.pbf:/region.osm.pbf:ro
+        command: sh -c 'osm2pgsql $$OSM2PGSQL_ARGS /region.osm.pbf'
+        profiles: [import]
+
+    tileserver:
+        image: facilmap/openstreetmap-tile-server
+        environment:
+            ALLOW_CORS: enabled
+        volumes:
+            - ./data/tileserver:/data
+            - ./cobblestone/style:/style/cobblestone:ro
+            - ./cycling-restrictions/style:/style/cycling-restrictions:ro
+            - ./tolls/style:/style/tolls:ro
+        links:
+            - postgis
+        depends_on:
+            postgis:
+                condition: service_healthy
+        ports:
+            - 8080:80
+        restart: always

@@ -17,12 +17,14 @@ services:
         image: iboates/osm2pgsql
         volumes:
             - .:/styles:ro
+            - ./data/osm2pgsql:/data
         environment:
             PGHOST: postgis
             PGDATABASE: o2p
             PGUSER: o2p
             PGPASSWORD: o2p
             OSM2PGSQL_ARGS: -O flex -S /styles/main.lua --slim
+            #OSM2PGSQL_ARGS: -O flex -S /styles/main.lua --slim --flat-nodes /data/flat_nodes.bin
         links:
             - postgis
         depends_on:

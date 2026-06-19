@@ -1,4 +1,7 @@
+-- This Lua script combines all the scripts found under the following glob:
 local scripts = "*/*.lua"
+-- Each of those scripts must export a table that may contain any of the `process_node`, … functions as elements,
+-- rather than assigning those to the global `osm2pgsql` global object as you normally would in an osm2pgsql script.
 
 local script_name = debug.getinfo(1, "S").source:sub(2):match("([^/\\]+)$")
 local script_path = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or ""

@@ -42,7 +42,7 @@ local function get_access(tags)
 	elseif bicycle == 'use_sidepath' then
 		return 'sidepath'
 	elseif bicycle == 'yes' or bicycle == 'discouraged' or bicycle == 'optional_sidepath' or bicycle == 'permissive' then
-		if highway == 'footway' or highway == 'pedestrian' or highway == 'living_street' or tags.foot == 'designated' then
+		if highway == 'footway' or highway == 'pedestrian' or tags.foot == 'designated' then
 			return 'pedestrian'
 		else
 			return nil
@@ -53,14 +53,13 @@ local function get_access(tags)
 		return 'restricted'
 
 	-- Check implicit bicycle access through highway type
+	elseif highway == 'living_street' then
+		return 'pedestrian'
 	elseif highway == 'motorway' or highway == 'motorway_link' then
 		return 'motorway'
 	elseif tags.motorroad == 'yes' then
 		return 'motorroad'
 	end
-
-	-- We do not display highway=pedestrian or highway=living_street unless they have explicit bicycle tags,
-	-- because their regulations vary from country to country and the default map already renders them.
 end
 
 local function get_highway(tags)

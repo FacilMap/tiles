@@ -58,6 +58,9 @@ services:
         image: facilmap/openstreetmap-tile-server
         environment:
             ALLOW_CORS: enabled
+            DEMO_VISIBLE: 0
+            DEMO_MAPNIK: 2
+            DEMO_OPACITY: 0.7
         volumes:
             - ./data/tileserver:/data
             - ./cobblestone/style:/style/cobblestone:ro

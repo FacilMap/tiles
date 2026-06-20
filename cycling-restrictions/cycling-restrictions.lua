@@ -33,12 +33,7 @@ local function get_access(tags)
 		-- If bicycles are explicitly permitted, skip checks based on other tags below
 		return nil
 	elseif bicycle == 'no' or bicycle == 'dismount' then
-		if highway == 'footway' then
-			-- Do not render footways, as it is clear from the map that cycling is not allowed and they would clutter the map
-			return nil
-		else
-			return 'restricted'
-		end
+		return 'restricted'
 	elseif bicycle == 'use_sidepath' then
 		return 'sidepath'
 	elseif bicycle == 'yes' or bicycle == 'discouraged' or bicycle == 'optional_sidepath' or bicycle == 'permissive' then
@@ -55,6 +50,9 @@ local function get_access(tags)
 	-- Check implicit bicycle access through highway type
 	elseif highway == 'living_street' then
 		return 'pedestrian'
+	elseif highway == 'footway' then
+		-- highway=footway implies that cycling is forbidden, but for highway=pedestrian, it depends on the country, so we don't render that
+		return 'restricted'
 	elseif highway == 'motorway' or highway == 'motorway_link' then
 		return 'motorway'
 	elseif tags.motorroad == 'yes' then

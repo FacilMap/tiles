@@ -231,6 +231,17 @@
 		[zoom >= 19] { line-width: 3.2; }
 	}
 
+	[highway='footway'][access='restricted'] {
+		/* Since "restricted" is the default for footways, we show them only at a higher zoom level and with less width.
+		   If we showed them like other paths, the map would be completely cluttered with red lines along many roads
+		   because cycling is forbidden on their sidewalk. */
+
+		line-width: 0;
+		[zoom >= 16] { line-width: 1.3; }
+		[zoom >= 18] { line-width: 1.3; }
+		[zoom >= 19] { line-width: 1.6; }
+	}
+
 	[highway='cycleway'] {
 		/* doubled for better visibility */
 		[zoom >= 13] { line-width: 1.4; }

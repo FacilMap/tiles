@@ -33,13 +33,94 @@ Follow these steps to get the provided docker-compose configuration up and runni
 1. Download [the whole planet](https://planet.openstreetmap.org/pbf/) or [a region](https://download.geofabrik.de/) and save it in this directory as `region.osm.pbf`.
 2. Adjust `OSM2PGSQL_ARGS` in `docker-compose.yml`:
     * For importing the whole planet rather than just one region, add `--flat-nodes /data/flat_nodes.bin` to drastically speed up the import.
-    * If you are _not_ planning to use replication, add `--drop` (and remove the `cron` service). Importing the whole planet in 2026-04 requires about 300 GiB of disk space for metadata. `--drop` will delete this metadata when the import is finished, but for applying deltas, the metadata needs to be kept.
+    * If you are _not_ planning to use replication, add `--drop` (and remove the `cron` service). Importing the whole planet in 2026-06 requires about 300 GiB of disk space for metadata. `--drop` will delete this metadata when the import is finished, but for applying deltas, the metadata needs to be kept.
 3. Run `docker compose run --rm import` for the initial import. For the whole planet, this can take several days.
 4. Run `docker compose up -d` to start the tile server.
 
-It should be noted that each tile set keeps its own tables with its own independent copy of its relevant geometric data in the PostGIS database. Each tile set’s Lua script decides which geometric data to store in what structure during the import. On the other hand, each tile set’s style determines how to read that data again and how to display it when the tile is actually rendered. This means that an update to the configuration of a tile set might require a whole reimport of the data (if the Lua script was changed).
+It should be noted that each tile set keeps its own tables with its own independent copy of its relevant geometric data in the PostGIS database. Each tile set’s Lua script decides which geometric data to store in what structure during the import. On the other hand, each tile set’s style determines how to read that data again and how to display it when the tile is actually rendered. This means that when the Lua script is changed, a whole reimport of the data is needed, but if only the style changes, deleting the tile cache and restarting the tile server is enough.
 
 Read about more details in the [openstreetmap-tile-server](https://github.com/FacilMap/openstreetmap-tile-server) docs.
+
+### Disk space requirements
+
+To give you a rough estimate what to expect, here are some numbers from importing the whole planet in 2026-06.
+
+The disk usage after the import is:
+* 88 GiB for the planet file (can be deleted once the import has finished)
+* 104 GiB for the flat nodes file. This stores the coordinates of all nodes on the planet. Calling the import without `--flat-nodes` would store them in the Postgres database instead, which makes the import take dramatically longer and probably also uses more disk space. If you are not planning to apply updates using replication, you can delete this file after the import.
+* 309 GiB for the Postgres database, most of which is metadata (all the ways and relations with their members and tags are stored so that when a single node changes in the future, the replication script can call updates on all the ways/relations that contain it). If you are not planning to use replication, you can delete the metadata after the import (using `--drop` for the import or deleting the `planet_osm_*` tables manually afterwards). Presumably, this leaves about 8 GiB of actual data.
+
+This means that for a successful import, you need at least 500 GiB of free disk space. It is better to have a bit of buffer, as the import takes several days, and if it fails due to the disk running full, there is no resume option and you have to restart it. After the import, about 415 GiB will be permanently occupied with replication, and about 8 GiB without replication. Keep in mind that this is just for the database; after the import, no tiles are created yet. Tiles will be created on request and then cached, so keep at least a few GiB free for the tile cache.
+
+Keep in mind that it is vital to run the import on a machine with a fast SSD. With a HDD, the import may take several weeks.
+
+Here is an overview over the table sizes after the import:
+
+| Table                         | Size    |
+|-------------------------------|---------|
+| `osm2pgsql_properties`        | 16 kB   |
+| `planet_osm_rels`             | 6794 MB |
+| `planet_osm_ways`             | 234 GB  |
+| `spatial_ref_sys`             | 6936 kB |
+| `cobblestone_areas`           | 10 MB   |
+| `cobblestone_lines`           | 126 MB  |
+| `cycling_restrictions_areas`  | 46 MB   |
+| `cycling_restrictions_lines`  | 7041 MB |
+| `toll_lines`                  | 116 MB  |
+
+Considering how small the actual data is in relation to the metadata, you might consider running the import (and possibly also the replication) on a local machine where disk space is cheaper and upload the final data to your server after the import.
+
+### Import time
+
+This is the output of importing the planet in 2026-06 on an AMD EPYC-Rome processor with 32 GB of RAM:
+
+```
+2026-06-20 14:03:30  osm2pgsql version 2.2.0 (2.2.0-2-g7629962d)
+2026-06-20 14:03:30  Database version: 17.5 (Debian 17.5-1.pgdg110+1)
+2026-06-20 14:03:30  PostGIS version: 3.5
+2026-06-20 14:03:30  Initializing properties table '"public"."osm2pgsql_properties"'.
+2026-06-20 14:03:30  Storing properties to table '"public"."osm2pgsql_properties"'.
+Processing: Node(10691251k 17188.5k/s) Way(223064k 6.02k/s) Relation(0 0.0/s)
+2026-06-22 02:03:31  Reading input files done in 129601s (36h 0m 1s).
+2026-06-22 02:03:31    Processed 10691251192 nodes in 622s (10m 22s) - 17189k/s
+2026-06-22 02:03:31    Processed 1197484086 ways in 127819s (35h 30m 19s) - 9k/s
+2026-06-22 02:03:31    Processed 14482579 relations in 1160s (19m 20s) - 12k/s
+2026-06-22 02:03:31  No marked nodes or ways (Skipping stage 2).
+2026-06-22 02:03:32  Building index on middle ways table
+2026-06-22 02:03:32  Clustering table 'cycling_restrictions_areas' by geometry...
+2026-06-22 02:03:32  Clustering table 'cobblestone_lines' by geometry...
+2026-06-22 02:03:32  Clustering table 'cobblestone_areas' by geometry...
+2026-06-22 02:03:32  Clustering table 'cycling_restrictions_lines' by geometry...
+2026-06-22 02:03:32  Building indexes on middle rels table
+2026-06-22 02:03:32  Done postprocessing on table 'planet_osm_nodes' in 0s
+2026-06-22 02:03:32  Creating index on table 'cobblestone_areas' ("geom")...
+2026-06-22 02:03:32  Creating id index on table 'cobblestone_areas'...
+2026-06-22 02:03:32  Analyzing table 'cobblestone_areas'...
+2026-06-22 02:03:32  Clustering table 'toll_lines' by geometry...
+2026-06-22 02:03:33  Creating index on table 'cycling_restrictions_areas' ("geom")...
+2026-06-22 02:03:33  Creating id index on table 'cycling_restrictions_areas'...
+2026-06-22 02:03:33  Analyzing table 'cycling_restrictions_areas'...
+2026-06-22 02:03:37  Creating index on table 'toll_lines' ("geom")...
+2026-06-22 02:03:38  Creating index on table 'cobblestone_lines' ("geom")...
+2026-06-22 02:03:39  Creating id index on table 'toll_lines'...
+2026-06-22 02:03:39  Analyzing table 'toll_lines'...
+2026-06-22 02:03:40  Creating id index on table 'cobblestone_lines'...
+2026-06-22 02:03:44  Analyzing table 'cobblestone_lines'...
+2026-06-22 02:13:27  Creating index on table 'cycling_restrictions_lines' ("geom")...
+2026-06-22 02:16:25  Creating id index on table 'cycling_restrictions_lines'...
+2026-06-22 02:17:26  Analyzing table 'cycling_restrictions_lines'...
+2026-06-24 00:57:26  Done postprocessing on table 'planet_osm_ways' in 168832s (46h 53m 52s)
+2026-06-24 00:57:26  Done postprocessing on table 'planet_osm_rels' in 5793s (1h 36m 33s)
+2026-06-24 00:57:26  All postprocessing on table 'cobblestone_lines' done in 13s.
+2026-06-24 00:57:26  All postprocessing on table 'cobblestone_areas' done in 1s.
+2026-06-24 00:57:26  All postprocessing on table 'cycling_restrictions_lines' done in 843s (14m 3s).
+2026-06-24 00:57:26  All postprocessing on table 'cycling_restrictions_areas' done in 2s.
+2026-06-24 00:57:26  All postprocessing on table 'toll_lines' done in 7s.
+2026-06-24 00:57:26  Storing properties to table '"public"."osm2pgsql_properties"'.
+2026-06-24 00:57:26  osm2pgsql took 298436s (82h 53m 56s) overall.
+```
+
+The import took 3½ days in total. Of this, importing and processing the planet itself took 1½ hours. After that, the “Analyzing table” step is run to optimize the speed of geospatial queries. This step took only a second on the `toll` tables, 10 minutes on the `cobblestone` tables but almost 2 days on the `cycling-restrictions` tables. So if you don’t need that last map style, removing it will save a lot of time.
 
 ## Create your own styles
 

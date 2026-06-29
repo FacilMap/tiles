@@ -1,19 +1,8 @@
-Map {
-	background-color: transparent;
-}
-
 #toll_roads {
+	line-join: round;
+	line-cap: round;
+	line-width: 0; /* Default to 0 so unmapped tags remain hidden */
 	line-color: #800080;
-
-	// These are the line widths of primary highways in the OSM-Carto stylesheet
-	// (https://github.com/openstreetmap-carto/openstreetmap-carto/blob/master/style/roads.mss),
-	// but for lower zoom levels we keep the width of zoom level 12.
-	line-width: 3.5;
-	[zoom >= 13] { line-width: 5; }
-	[zoom >= 15] { line-width: 10; }
-	[zoom >= 17] { line-width: 18; }
-	[zoom >= 18] { line-width: 21; }
-	[zoom >= 19] { line-width: 27; }
 
 	// Width & min zoom are designed to mirror openstreetmap-carto hierarchy
 	// The difference is that we show motorways, trunk roads and primary highways at all zoom levels with a minimum width of 3.5

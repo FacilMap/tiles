@@ -1,2 +1,2 @@
-* * * * * docker exec "$OSM2PGSQL_CONTAINER" osm2pgsql-replication update $OSM2PGSQL_ARGS 2>&1
+* * * * * docker exec "$OSM2PGSQL_CONTAINER" osm2pgsql-replication update -- $OSM2PGSQL_ARGS 2>&1
 # newline required at the end of file

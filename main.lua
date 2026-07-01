@@ -13,7 +13,7 @@ if not handle then return end
 local package_path = package.path
 for filename in handle:lines() do
     if filename:match("%.lua$") and filename ~= script_name then
-        local module_name = filename:gsub("%.lua$", "")
+        local module_name = filename:match("([^/]+)%.lua$")
         package.path = filename:match("(.*/)") .. "?.lua;" .. package_path
         processors[module_name] = require(module_name)
     end

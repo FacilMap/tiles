@@ -31,21 +31,8 @@ services:
             postgis:
                 condition: service_healthy
         entrypoint: ""
-        command: ["tail", "-f", "/dev/null"]
+        command: sh -c 'while true; do osm2pgsql-replication update -- $$OSM2PGSQL_ARGS; sleep 300; done'
         restart: always
-
-    cron:
-        image: docker
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - ./crontab:/etc/crontabs/root:ro
-        links:
-            - osm2pgsql
-        environment:
-            OSM2PGSQL_CONTAINER: tiles-osm2pgsql-1
-        command: crond -f -d 7
-        restart: always
-        profiles: [aaa]
 
     import:
         extends: osm2pgsql

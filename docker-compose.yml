@@ -1,14 +1,19 @@
+x-vars:
+    - &database o2p
+    - &user o2p
+    - &password o2p
+
 services:
     postgis:
         image: postgis/postgis:latest
         environment:
-            POSTGRES_DB: o2p
-            POSTGRES_USER: o2p
-            POSTGRES_PASSWORD: o2p
+            POSTGRES_DB: *database
+            POSTGRES_USER: *user
+            POSTGRES_PASSWORD: *password
         volumes:
             - ./data/postgis:/var/lib/postgresql/data
         healthcheck:
-            test: pg_isready -h localhost -d o2p -U o2p
+            test: pg_isready -h localhost -d $$POSTGRES_DB -U $$POSTGRES_USER
             start_period: 60s
             start_interval: 1s
         restart: always
@@ -20,9 +25,9 @@ services:
             - ./data/osm2pgsql:/data
         environment:
             PGHOST: postgis
-            PGDATABASE: o2p
-            PGUSER: o2p
-            PGPASSWORD: o2p
+            PGDATABASE: *database
+            PGUSER: *user
+            PGPASSWORD: *password
             OSM2PGSQL_ARGS: -O flex -S /styles/main.lua --slim
             #OSM2PGSQL_ARGS: -O flex -S /styles/main.lua --slim --flat-nodes /data/flat_nodes.bin
         links:
@@ -48,6 +53,10 @@ services:
             DEMO_VISIBLE: 0
             DEMO_MAPNIK: 2
             DEMO_OPACITY: 0.7
+            PGHOST: postgis
+            PGDATABASE: *database
+            PGUSER: *user
+            PGPASSWORD: *password
         volumes:
             - ./data/tileserver:/data
             - ./cobblestone/style:/style/cobblestone:ro

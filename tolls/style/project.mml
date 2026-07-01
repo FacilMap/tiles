@@ -13,10 +13,10 @@
 			"srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
 			"Datasource": {
 				"type": "postgis",
-				"host": "postgis",
-				"user": "o2p",
-				"password": "o2p",
-				"dbname": "o2p",
+				"host": "$PGHOST",
+				"user": "$PGUSER",
+				"password": "$PGPASSWORD",
+				"dbname": "$PGDATABASE",
 				"table": "tolls_lines",
 				"geometry_field": "geom"
 			}

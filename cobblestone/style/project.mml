@@ -12,10 +12,10 @@ Layer:
             table: "cobblestone_areas"
             key_field: "osm_id"
             geometry_field: "geom"
-            dbname: "o2p"
-            host: "postgis"
-            user: "o2p"
-            password: "o2p"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
             extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
 
     -
@@ -28,10 +28,10 @@ Layer:
             table: "cobblestone_lines"
             key_field: "osm_id"
             geometry_field: "geom"
-            dbname: "o2p"
-            host: "postgis"
-            user: "o2p"
-            password: "o2p"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
             extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
 
 Stylesheet:

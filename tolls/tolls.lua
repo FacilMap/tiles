@@ -1,14 +1,14 @@
 local M = {};
 
-local toll_expire = osm2pgsql.define_expire_output({
+local tolls_expire = osm2pgsql.define_expire_output({
     maxzoom = 20,
-    table = 'toll_expire'
+    table = 'tolls_expire'
 })
 
-local toll_lines = osm2pgsql.define_way_table('toll_lines', {
+local tolls_lines = osm2pgsql.define_way_table('tolls_lines', {
 	{ column = 'osm_id',   type = 'int8', not_null = true },
 	{ column = 'highway', type = 'text' },
-	{ column = 'geom',     type = 'linestring', projection = 3857, expire = { { output = toll_expire } } },
+	{ column = 'geom',     type = 'linestring', projection = 3857, expire = { { output = tolls_expire } } },
 })
 
 local function get_highway(tags)
@@ -26,7 +26,7 @@ end
 
 function M.process_way(object)
 	if object.tags.toll == 'yes' and object.tags.route ~= 'ferry' then
-		toll_lines:insert({
+		tolls_lines:insert({
 			osm_id = object.id,
 			highway = get_highway(object.tags),
 			geom = object:as_linestring()

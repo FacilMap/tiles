@@ -8,8 +8,8 @@
 	"Stylesheet": ["style.mss"],
 	"Layer": [
 		{
-			"id": "toll_roads",
-			"name": "toll_roads",
+			"id": "tolls_roads",
+			"name": "tolls_roads",
 			"srs": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over",
 			"Datasource": {
 				"type": "postgis",
@@ -17,7 +17,7 @@
 				"user": "o2p",
 				"password": "o2p",
 				"dbname": "o2p",
-				"table": "toll_lines",
+				"table": "tolls_lines",
 				"geometry_field": "geom"
 			}
 		}

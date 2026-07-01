@@ -1,4 +1,4 @@
-#toll_roads {
+#tolls_roads {
 	line-join: round;
 	line-cap: round;
 	line-width: 0; /* Default to 0 so unmapped tags remain hidden */

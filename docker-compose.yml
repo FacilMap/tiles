@@ -18,11 +18,12 @@ services:
             start_interval: 1s
         restart: always
 
-    osm2pgsql:
+    import: &import
         image: iboates/osm2pgsql
         volumes:
             - .:/styles:ro
             - ./data/osm2pgsql:/data
+            - ./region.osm.pbf:/region.osm.pbf:ro
         environment:
             PGHOST: postgis
             PGDATABASE: *database
@@ -36,15 +37,17 @@ services:
             postgis:
                 condition: service_healthy
         entrypoint: ""
-        command: sh -c 'while true; do osm2pgsql-replication update -- $$OSM2PGSQL_ARGS; sleep 300; done'
-        restart: always
-
-    import:
-        extends: osm2pgsql
-        volumes:
-            - ./region.osm.pbf:/region.osm.pbf:ro
         command: sh -c 'osm2pgsql $$OSM2PGSQL_ARGS /region.osm.pbf'
         profiles: [import]
+
+    replication:
+        <<: *import
+        volumes:
+            - .:/styles:ro
+            - ./data/osm2pgsql:/data
+        command: sh -c 'while true; do osm2pgsql-replication update -- $$OSM2PGSQL_ARGS; sleep 60; done'
+        restart: always
+        profiles: []
 
     tileserver:
         image: facilmap/openstreetmap-tile-server

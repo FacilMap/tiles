@@ -33,9 +33,10 @@ Follow these steps to get the provided docker-compose configuration up and runni
 1. Download [the whole planet](https://planet.openstreetmap.org/pbf/) or [a region](https://download.geofabrik.de/) and save it in this directory as `region.osm.pbf`.
 2. Adjust `OSM2PGSQL_ARGS` in `docker-compose.yml`:
     * For importing the whole planet rather than just one region, add `--flat-nodes /data/flat_nodes.bin` to drastically speed up the import.
-    * If you are _not_ planning to use replication, add `--drop` (and remove the `cron` service). Importing the whole planet in 2026-06 requires about 300 GiB of disk space for metadata. `--drop` will delete this metadata when the import is finished, but for applying deltas, the metadata needs to be kept.
+    * If you are _not_ planning to use replication, add `--drop`. Importing the whole planet in 2026-06 requires about 300 GiB of disk space for metadata. `--drop` will delete this metadata when the import is finished, but for applying deltas, the metadata needs to be kept.
 3. Run `docker compose run --rm import` for the initial import. For the whole planet, this can take several days.
-4. Run `docker compose up -d` to start the tile server.
+4. If you want to use replication, run `docker compose run --rm replication osm2pgsql-replication init` to initialize it, and then start the service by running `docker compose up -d replication`. Otherwise, delete the service or simply keep it stopped.
+5. Run `docker compose up -d tileserver` to start the tile server.
 
 It should be noted that each tile set keeps its own tables with its own independent copy of its relevant geometric data in the PostGIS database. Each tile set’s Lua script decides which geometric data to store in what structure during the import. On the other hand, each tile set’s style determines how to read that data again and how to display it when the tile is actually rendered. This means that when the Lua script is changed, a whole reimport of the data is needed, but if only the style changes, deleting the tile cache and restarting the tile server is enough.
 

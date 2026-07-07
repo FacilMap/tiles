@@ -71,6 +71,12 @@ Here is an overview over the table sizes after the import:
 
 Considering how small the actual data is in relation to the metadata, you might consider running the import (and possibly also the replication) on a local machine where disk space is cheaper and upload the final data to your server after the import.
 
+The size of the rendered tiles is suprisingly low. For example, prerendering all 3 map styles up to zoom level 8 takes less than 50 MiB of disk space. Of course, at higher zoom levels the number of tiles rises exponentially. But having 10 GiB of space available for tiles should be way enough for hosting all 3 map styles long-term.
+
+### Memory requirements
+
+It is advised to run the tileserver on a system with at least 32 GiB of memory and ideally another 32 GiB of swap. This is not just relevant for the import, but also for rendering the tiles. When renderd is running with 4 threads (the default for FacilMap/openstreetmap-tile-server), it frequently consumes around 16 GiB of memory while rendering tiles. Make sure to have enough memory/swap available, as otherwise renderd will crash and the container will restart and might get stuck in an infinite loop of rerendering the same tile.
+
 ### Import time
 
 This is the output of importing the planet in 2026-06 on an AMD EPYC-Rome processor with 32 GB of RAM:

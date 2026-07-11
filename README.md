@@ -23,6 +23,8 @@ You can adjust the opacity as you wish. For those overlays that only use a singl
 
 > I am embedding an image into my website that has a transparent background and contains some lines with the colour #800080. Write me a CSS `filter` that I can apply to the `img` element to show the lines in colour #xxx instead.
 
+At the moment the FacilMap tile server is configured to apply minutely live updates of the OpenStreetMap database, so changes should be applied within a few minutes. Tiles are rendered on request, meaning that when you open a region that no one has viewed before, it can take a few seconds for the map to load (in times of high server load it is sometimes necessary to reload the map after a minute or so).
+
 ## Self-host
 
 Using a combination of the [postgis/postgis](https://hub.docker.com/r/postgis/postgis), [iboates/osm2pgsql](https://hub.docker.com/r/iboates/osm2pgsql) and [facilmap/openstreetmap-tile-server](https://hub.docker.com/r/facilmap/openstreetmap-tile-server) docker images is a comparatively easy way to self-host a tile server. The [docker-compose.yml](./docker-compose.yml) file in this repository is configured to serve all the sets of tiles contained in this repository and can be used as a starting point for your own configuration.

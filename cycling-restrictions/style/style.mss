@@ -19,7 +19,7 @@
 	[access='optional'] { line-color: @optional-color; }
 
 	/* Apply forward/backward direction markers. These are shown starting from a zoom level where the line width is at least 5,
-	   and at zoom level 18 for ways that never reach this width (such as footways). */
+	   and at zoom level 17 for ways that never reach this width (such as footways). */
 	[highway='motorway'][zoom >= 13],
 	[highway='motorway_link'][zoom >= 15],
 	[highway='trunk'][zoom >= 13],
@@ -52,6 +52,29 @@
 			[zoom >= 19] {
 				marker-width: 35;
 				marker-spacing: 100;
+			}
+		}
+
+
+		/* Outline arrow where the arrow colour is the same as the line colour, except on thin lines (like footways)
+		   where the arrow is wider than the path */
+		::forward[forward='motorway'][access='motorway'], ::backward[backward='motorway'][access='motorway'],
+		::forward[forward='motorroad'][access='motorroad'], ::backward[backward='motorroad'][access='motorroad'],
+		::forward[forward='pedestrian'][access='pedestrian'], ::backward[backward='pedestrian'][access='pedestrian'],
+		::forward[forward='sidepath'][access='sidepath'], ::backward[backward='sidepath'][access='sidepath'],
+		::forward[forward='optional'][access='optional'], ::backward[backward='optional'][access='optional'] {
+			[highway='motorway'], [highway='motorway_link'],
+			[highway='trunk'], [highway='trunk_link'],
+			[highway='primary'], [highway='primary_link'],
+			[highway='secondary'], [highway='secondary_link'],
+			[highway='tertiary'], [highway='tertiary_link'],
+			[highway='residential'],
+			[highway='unclassified'],
+			[highway='living_street'],
+			[highway='pedestrian'],
+			[highway='raceway'],
+			[highway='platform'] {
+				marker-line-width: 0.4;
 			}
 		}
 
@@ -93,8 +116,8 @@
 			[zoom >= 7]  { line-width: 0.8; }
 			[zoom >= 8]  { line-width: 1; }
 			[zoom >= 9]  { line-width: 1.4; }
-			[zoom >= 10]  { line-width: 1.9; }
-			[zoom >= 11]  { line-width: 2.0; }
+			[zoom >= 10] { line-width: 1.9; }
+			[zoom >= 11] { line-width: 2.0; }
 			[zoom >= 12] { line-width: 3.5; }
 			[zoom >= 13] { line-width: 6; }
 			[zoom >= 15] { line-width: 10; }

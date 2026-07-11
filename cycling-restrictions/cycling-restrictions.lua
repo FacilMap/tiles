@@ -40,28 +40,6 @@ local function is_oneway(oneway, direction)
 	return oneway and (direction == 'forward' and (oneway == 'yes' or oneway == 'true' or oneway == '1')) or (direction == 'backward' and (oneway == '-1' or oneway == 'reverse'))
 end
 
----@generic T
----@param arr T[]
----@param val T
----@return boolean
-local function array_contains(arr, val)
-    for index, value in ipairs(arr) do
-        if value == val then
-            return true
-        end
-    end
-
-    return false
-end
-
-local thin_highways = { 'steps', 'bridleway', 'footway', 'path', 'footway', 'cycleway', 'track', 'bus_guideway' }
-
----@param highway string
----@return boolean
-local function is_thin(highway)
-	return array_contains(thin_highways, highway)
-end
-
 ---@param tags tags
 ---@return access | nil
 local function get_access(tags, direction)
@@ -140,59 +118,71 @@ function M.process_way(object)
 			})
 		end
 	else
-		local access = get_access(object.tags)
-
 		---@type access | 'allowed' | nil
 		local forward = get_access(object.tags, 'forward')
 		---@type access | 'allowed' | nil
 		local backward = get_access(object.tags, 'backward')
 
-		local highway = get_highway(object.tags)
-		local oneway = object.tags.oneway
-
-		if is_oneway(oneway, 'forward') then
-			if backward == nil then
-				-- Render a green arrow opposite to the OSM Carto one-way street arrow to indicate that cycling is allowed
-				-- in the opposite direction.
-				backward = 'allowed'
-			elseif backward == 'restricted' then
-				-- Cycling being forbidden in the opposite direction is the default assumption and we don't render anything
-				-- and let the OSM Carto arrows indicate the one-way street. If we rendered this case explicitly, the whole
-				-- map would be cluttered because it would apply to almost every dual carriageway.
-				backward = nil
-			end
-		elseif is_oneway(oneway, 'backward') then
-			if forward == nil then
-				forward = 'allowed'
-			elseif forward == 'restricted' then
-				forward = nil
-			end
+		local access
+		if forward == backward then
+			access = forward
+		else
+			access = get_access(object.tags) -- Decide "main" access type based on non-directional tags
 		end
 
-		if (forward ~= access or backward ~= access) and highway and is_thin(highway) then
-			-- For thin ways with different directional access, we keep both arrows.
-			-- For others, we only keep arrows that differ from the general access.
+		local highway = get_highway(object.tags)
+		local oneway = object.tags.oneway
+		local oneway_forward = is_oneway(oneway, 'forward')
+		local oneway_backward = is_oneway(oneway, 'backward')
 
-			if forward == nil then
-				forward = 'allowed'
-			elseif forward == 'restricted' then
-				-- For thin one-way streets, we render only one arrow
+		if (oneway_forward or oneway_backward) and forward == nil and backward == nil then
+			-- A one-way street where cycling is allowed in both directions. We explicitly render two arrows here to make it
+			-- clear that the OSM Carto one-way street arrow has no relevance for cyclists.
+			forward = 'allowed'
+			backward = 'allowed'
+		elseif (oneway_forward and forward == nil and backward == 'restricted') or (oneway_backward and backward == nil and forward == 'restricted') then
+			-- A one-way street where cycling is allowed in its direction and forbidden in the opposite direction. This is the
+			-- default case of a one-way street. We do not render anything on such a road because the OSM Carto one-way street
+			-- arrows already indicate this case.
+			access = nil
+			forward = nil
+			backward = nil
+		elseif forward == access and backward == access then
+			-- Forward and backward both equal the main access level, so no arrows needed
+			forward = nil
+			backward = nil
+		elseif forward == 'restricted' then
+			-- (Only) forward is forbidden. Render no forward arrow.
+			forward = nil
+
+			if oneway_backward and backward == access then
+				-- A oneway street where cycling is forbidden in the opposite direction. This is the default case of a
+				-- one-way street. We do not render any arrows on such a road because the OSM Carto one-way street arrows
+				-- already indicate this case.
 				forward = nil
-			end
-
-			if backward == nil then
-				backward = 'allowed'
-			elseif backward == 'restricted' then
 				backward = nil
+			else
+				-- Force a backward arrow to indicate one-way access.
+				backward = backward or access or 'allowed'
+			end
+		elseif backward == 'restricted' then
+			-- (Only) backward is forbidden. Render no backward arrow.
+			backward = nil
+
+			if oneway_forward and forward == access then
+				-- A oneway street where cycling is forbidden in the opposite direction. This is the default case of a
+				-- one-way street. We do not render any arrows on such a road because the OSM Carto one-way street arrows
+				-- already indicate this case.
+				forward = nil
+				backward = nil
+			else
+				-- Force a forward arrow to indicate one-way access.
+				forward = forward or access or 'allowed'
 			end
 		else
-			if forward == access then
-				forward = nil
-			end
-
-			if backward == access then
-				backward = nil
-			end
+			-- Neither forward nor backward are forbidden, but ther access levels differ. Render two arrows, one for each direction.
+			forward = forward or access or 'allowed'
+			backward = backward or access or 'allowed'
 		end
 
 		if access ~= nil or forward ~= nil or backward ~= nil then

@@ -18,33 +18,70 @@
 	[access='sidepath'] { line-color: @sidepath-color; }
 	[access='optional'] { line-color: @optional-color; }
 
-	::forward[forward != null], ::backward[backward != null] {
-		marker-placement: line;
-        marker-spacing: 60;
-        marker-file: url('./oneway.svg');
-		marker-width: 15;
-	}
+	/* Apply forward/backward direction markers. These are shown starting from a zoom level where the line width is at least 5,
+	   and at zoom level 18 for ways that never reach this width (such as footways). */
+	[highway='motorway'][zoom >= 13],
+	[highway='motorway_link'][zoom >= 15],
+	[highway='trunk'][zoom >= 13],
+	[highway='trunk_link'][zoom >= 15],
+	[highway='primary'][zoom >= 13],
+	[highway='primary_link'][zoom >= 15],
+	[highway='secondary'][zoom >= 13],
+	[highway='secondary_link'][zoom >= 15],
+	[highway='tertiary'][zoom >= 14],
+	[highway='tertiary_link'][zoom >= 15],
+	[highway='residential'][zoom >= 15],
+	[highway='unclassified'][zoom >= 15],
+	[highway='living_street'][zoom >= 15],
+	[highway='pedestrian'][zoom >= 15],
+	[highway='raceway'][zoom >= 15],
+	[highway='platform'][zoom >= 16],
+	[zoom >= 17] {
+		::forward[forward != null], ::backward[backward != null] {
+			marker-placement: line;
+			marker-allow-overlap: true;
 
-	::forward[forward != null] {
-		[forward='motorway'] { marker-fill: @motorway-color; marker-line-color: @motorway-color; }
-		[forward='motorroad'] { marker-fill: @motorroad-color; marker-line-color: @motorroad-color; }
-		[forward='restricted'] { marker-fill: @restricted-color; marker-line-color: @restricted-color; }
-		[forward='pedestrian'] { marker-fill: @pedestrian-color; marker-line-color: @pedestrian-color; }
-		[forward='sidepath'] { marker-fill: @sidepath-color; marker-line-color: @sidepath-color; }
-		[forward='optional'] { marker-fill: @optional-color; marker-line-color: @optional-color; }
-		[forward='allowed'] { marker-fill: @allowed-color; marker-line-color: @allowed-color; }
-	}
+			marker-width: 15;
+			marker-spacing: 36; /* OSM Carto has 180, so with this we align with its arrows */
 
-	::backward[backward != null] {
-		marker-transform: "rotate(180) translate(12, 0)";
+			[zoom >= 16] {
+				marker-width: 25;
+				marker-spacing: 60;
+			}
 
-		[backward='motorway'] { marker-fill: @motorway-color; marker-line-color: @motorway-color; }
-		[backward='motorroad'] { marker-fill: @motorroad-color; marker-line-color: @motorroad-color; }
-		[backward='restricted'] { marker-fill: @restricted-color; marker-line-color: @restricted-color; }
-		[backward='pedestrian'] { marker-fill: @pedestrian-color; marker-line-color: @pedestrian-color; }
-		[backward='sidepath'] { marker-fill: @sidepath-color; marker-line-color: @sidepath-color; }
-		[backward='optional'] { marker-fill: @optional-color; marker-line-color: @optional-color; }
-		[backward='allowed'] { marker-fill: @allowed-color; marker-line-color: @allowed-color; }
+			[zoom >= 19] {
+				marker-width: 35;
+				marker-spacing: 100;
+			}
+		}
+
+		::forward[forward != null] {
+			marker-file: url('./oneway.svg');
+
+			[forward='motorway'] { marker-fill: @motorway-color; }
+			[forward='motorroad'] { marker-fill: @motorroad-color; }
+			[forward='restricted'] { marker-fill: @restricted-color; }
+			[forward='pedestrian'] { marker-fill: @pedestrian-color; }
+			[forward='sidepath'] { marker-fill: @sidepath-color; }
+			[forward='optional'] { marker-fill: @optional-color; }
+			[forward='allowed'] { marker-fill: @allowed-color; }
+		}
+
+		::backward[backward != null] {
+			marker-file: url('./oneway-reverse.svg');
+
+			marker-transform: "translate(-15, 0)";
+			[zoom >= 16] { marker-transform: "translate(-25, 0)"; }
+			[zoom >= 19] { marker-transform: "translate(-35, 0)"; }
+
+			[backward='motorway'] { marker-fill: @motorway-color; }
+			[backward='motorroad'] { marker-fill: @motorroad-color; }
+			[backward='restricted'] { marker-fill: @restricted-color; }
+			[backward='pedestrian'] { marker-fill: @pedestrian-color; }
+			[backward='sidepath'] { marker-fill: @sidepath-color; }
+			[backward='optional'] { marker-fill: @optional-color; }
+			[backward='allowed'] { marker-fill: @allowed-color; }
+		}
 	}
 
 
@@ -263,8 +300,6 @@
 			[zoom >= 16] { line-width: 2.6; }
 			[zoom >= 18] { line-width: 2.6; }
 			[zoom >= 19] { line-width: 3.2; }
-
-			[zoom <= 15] { ::forward, ::backward { marker: none; } }
 		}
 
 		[highway='footway'][access='restricted'] {

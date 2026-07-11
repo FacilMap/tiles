@@ -11,9 +11,17 @@ local cycling_restrictions_expire = osm2pgsql.define_expire_output({
 
 local cycling_restrictions_lines = osm2pgsql.define_way_table('cycling_restrictions_lines', {
 	{ column = 'osm_id', type = 'int8', not_null = true },
+
+	-- The road will be filled in a colour representing the access type. Roads where cycling is
+	-- allowed will not be filled (access is null).
 	{ column = 'access', type = 'text' },
+
+	-- For roads where the forward/backward access is different, we render directional arrows
+	-- in the colours representing the access type stored here. null means that no arrow should
+	-- be rendered in this direction.
 	{ column = 'forward', type = 'text' },
 	{ column = 'backward', type = 'text' },
+
 	{ column = 'highway', type = 'text' },
 	{ column = 'geom', type = 'linestring', projection = 3857, expire = { { output = cycling_restrictions_expire } } },
 })
@@ -30,6 +38,28 @@ local cycling_restrictions_areas = osm2pgsql.define_area_table('cycling_restrict
 ---@return boolean
 local function is_oneway(oneway, direction)
 	return oneway and (direction == 'forward' and (oneway == 'yes' or oneway == 'true' or oneway == '1')) or (direction == 'backward' and (oneway == '-1' or oneway == 'reverse'))
+end
+
+---@generic T
+---@param arr T[]
+---@param val T
+---@return boolean
+local function array_contains(arr, val)
+    for index, value in ipairs(arr) do
+        if value == val then
+            return true
+        end
+    end
+
+    return false
+end
+
+local thin_highways = { 'steps', 'bridleway', 'footway', 'path', 'footway', 'cycleway', 'track', 'bus_guideway' }
+
+---@param highway string
+---@return boolean
+local function is_thin(highway)
+	return array_contains(thin_highways, highway)
 end
 
 ---@param tags tags
@@ -110,54 +140,52 @@ function M.process_way(object)
 			})
 		end
 	else
+		local access = get_access(object.tags)
+
 		---@type access | 'allowed' | nil
 		local forward = get_access(object.tags, 'forward')
 		---@type access | 'allowed' | nil
 		local backward = get_access(object.tags, 'backward')
 
-		if forward == backward and forward ~= nil then
-			cycling_restrictions_lines:insert({
-				osm_id = object.id,
-				access = forward,
-				highway = get_highway(object.tags),
-				geom = object:as_linestring()
-			})
+		local highway = get_highway(object.tags)
+		local oneway = object.tags.oneway
 
-		-- Keep in mind special case: Oneway streets where cycling is allowed in both directions now still have forward and backward both nil
+		if is_oneway(oneway, 'forward') then
+			if backward == nil then
+				-- Render a green arrow opposite to the OSM Carto one-way street arrow to indicate that cycling is allowed
+				-- in the opposite direction.
+				backward = 'allowed'
+			elseif backward == 'restricted' then
+				-- Cycling being forbidden in the opposite direction is the default assumption and we don't render anything
+				-- and let the OSM Carto arrows indicate the one-way street. If we rendered this case explicitly, the whole
+				-- map would be cluttered because it would apply to almost every dual carriageway.
+				backward = nil
+			end
+		elseif is_oneway(oneway, 'backward') then
+			if forward == nil then
+				forward = 'allowed'
+			elseif forward == 'restricted' then
+				forward = nil
+			end
+		end
+
+		if (forward ~= access or backward ~= access) and highway and is_thin(highway) then
+			-- For thin ways with different directional access, we keep both arrows.
+			-- For others, we only keep arrows that differ from the general access.
+
+			if forward == nil then
+				forward = 'allowed'
+			elseif forward == 'restricted' then
+				-- For thin one-way streets, we render only one arrow
+				forward = nil
+			end
+
+			if backward == nil then
+				backward = 'allowed'
+			elseif backward == 'restricted' then
+				backward = nil
+			end
 		else
-			local oneway = object.tags.oneway
-			local access = nil
-
-			-- If access is different in both directions
-			if forward == 'motorway' or backward == 'motorway' then
-				access = 'motorway';
-			elseif forward == 'motorroad' or backward == 'motorroad' then
-				access = 'motorroad'
-			elseif forward == 'sidepath' or backward == 'sidepath' then
-				access = 'sidepath'
-			elseif forward == 'optional' or backward == 'optional' then
-				access = 'optional'
-			end
-
-			if is_oneway(oneway, 'forward') then
-				if backward == nil then
-					-- Render a green arrow opposite to the OSM Carto one-way street arrow to indicate that cycling is allowed
-					-- in the opposite direction.
-					backward = 'allowed'
-				elseif backward == 'restricted' then
-					-- Cycling being forbidden in the opposite direction is the default assumption and we don't render anything
-					-- and let the OSM Carto arrows indicate the one-way street. If we rendered this case explicitly, the whole
-					-- map would be cluttered because it would apply to almost every dual carriageway.
-					backward = nil
-				end
-			elseif is_oneway(oneway, 'backward') then
-				if forward == nil then
-					forward = 'allowed'
-				elseif forward == 'restricted' then
-					forward = nil
-				end
-			end
-
 			if forward == access then
 				forward = nil
 			end
@@ -165,17 +193,17 @@ function M.process_way(object)
 			if backward == access then
 				backward = nil
 			end
+		end
 
-			if access ~= nil or forward ~= nil or backward ~= nil then
-				cycling_restrictions_lines:insert({
-					osm_id = object.id,
-					access = access,
-					forward = forward,
-					backward = backward,
-					highway = get_highway(object.tags),
-					geom = object:as_linestring()
-				})
-			end
+		if access ~= nil or forward ~= nil or backward ~= nil then
+			cycling_restrictions_lines:insert({
+				osm_id = object.id,
+				access = access,
+				forward = forward,
+				backward = backward,
+				highway = highway,
+				geom = object:as_linestring()
+			})
 		end
 	end
 end

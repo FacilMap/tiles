@@ -3,14 +3,16 @@ srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k
 
 Layer:
     -
-        id: "cycling_restrictions_areas"
-        name: "cycling_restrictions_areas"
+        id: "cycling_restrictions_areas1"
+        name: "cycling_restrictions_areas1"
         srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
         geometry: "polygon"
+        properties:
+            minzoom: 6
         Datasource:
             type: "postgis"
-            table: "cycling_restrictions_areas"
-            key_field: "osm_id"
+            table: "cycling_restrictions_areas1"
+            key_field: "area_id"
             geometry_field: "geom"
             dbname: "$PGDATABASE"
             host: "$PGHOST"
@@ -19,14 +21,124 @@ Layer:
             extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
 
     -
-        id: "cycling_restrictions_lines"
-        name: "cycling_restrictions_lines"
+        id: "cycling_restrictions_areas2"
+        name: "cycling_restrictions_areas2"
         srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
-        geometry: "linestring"
+        geometry: "polygon"
+        properties:
+            minzoom: 10
         Datasource:
             type: "postgis"
-            table: "cycling_restrictions_lines"
-            key_field: "osm_id"
+            table: "cycling_restrictions_areas2"
+            key_field: "area_id"
+            geometry_field: "geom"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cycling_restrictions_areas3"
+        name: "cycling_restrictions_areas3"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "polygon"
+        properties:
+            minzoom: 13
+        Datasource:
+            type: "postgis"
+            table: "cycling_restrictions_areas3"
+            key_field: "area_id"
+            geometry_field: "geom"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cycling_restrictions_areas4"
+        name: "cycling_restrictions_areas4"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "polygon"
+        properties:
+            minzoom: 16
+        Datasource:
+            type: "postgis"
+            table: "cycling_restrictions_areas4"
+            key_field: "area_id"
+            geometry_field: "geom"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cycling_restrictions_lines1"
+        name: "cycling_restrictions_lines1"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "linestring"
+        properties:
+            minzoom: 6
+        Datasource:
+            type: "postgis"
+            table: "cycling_restrictions_lines1"
+            key_field: "way_id"
+            geometry_field: "geom"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cycling_restrictions_lines2"
+        name: "cycling_restrictions_lines2"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "linestring"
+        properties:
+            minzoom: 10
+        Datasource:
+            type: "postgis"
+            table: "cycling_restrictions_lines2"
+            key_field: "way_id"
+            geometry_field: "geom"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cycling_restrictions_lines3"
+        name: "cycling_restrictions_lines3"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "linestring"
+        properties:
+            minzoom: 13
+        Datasource:
+            type: "postgis"
+            table: "cycling_restrictions_lines3"
+            key_field: "way_id"
+            geometry_field: "geom"
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            extent: "-20037508.34,-20037508.34,20037508.34,20037508.34"
+
+    -
+        id: "cycling_restrictions_lines4"
+        name: "cycling_restrictions_lines4"
+        srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+        geometry: "linestring"
+        properties:
+            minzoom: 16
+        Datasource:
+            type: "postgis"
+            table: "cycling_restrictions_lines4"
+            key_field: "way_id"
             geometry_field: "geom"
             dbname: "$PGDATABASE"
             host: "$PGHOST"

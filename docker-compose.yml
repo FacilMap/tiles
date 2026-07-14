@@ -60,6 +60,7 @@ services:
             PGDATABASE: *database
             PGUSER: *user
             PGPASSWORD: *password
+            #DEBUG: 1
         volumes:
             - ./data/tileserver:/data
             - ./cobblestone/style:/style/cobblestone:ro

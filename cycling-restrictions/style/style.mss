@@ -6,7 +6,7 @@
 @optional-color: #AEEA00; /* High-Vis Lime */
 @allowed-color:  #00C853; /* Vivid Emerald Green */
 
-#cycling_restrictions_lines {
+#cycling_restrictions_lines1, #cycling_restrictions_lines2, #cycling_restrictions_lines3, #cycling_restrictions_lines4 {
 	line-join: round;
 	line-cap: round;
 	line-width: 0; /* Default to 0 so unmapped tags remain hidden */
@@ -359,7 +359,7 @@
 	}
 }
 
-#cycling_restrictions_areas {
+#cycling_restrictions_areas1, #cycling_restrictions_areas2, #cycling_restrictions_areas3, #cycling_restrictions_areas4 {
 	[access='motorway'] { polygon-fill: @motorway-color; }
 	[access='motorroad'] { polygon-fill: @motorroad-color; }
 	[access='restricted'] { polygon-fill: @restricted-color; }

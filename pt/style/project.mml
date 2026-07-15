@@ -1,0 +1,82 @@
+name: "Public Transport Map"
+srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over"
+Layer:
+    -
+        id: pt_stations_poly
+        Datasource:
+            type: postgis
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            table: "(select * from pt_areas order by prio desc) as data"
+    -
+        id: pt_lines
+        Datasource:
+            type: postgis
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            geometry_field: geom
+            geometry_table: pt_lines
+            table: |
+                (SELECT geom, mode, state, ref, name FROM pt_lines
+                UNION ALL
+                SELECT w.geom, rm.mode, rm.state, rm.ref, rm.name
+                FROM (
+                    WITH RECURSIVE route_members AS (
+                        SELECT r.id AS rel_id, r.mode, r.state, r.ref, r.name, m.type AS member_type, m.ref AS member_id
+                        FROM pt_route_relations r,
+                        LATERAL jsonb_to_recordset(r.members) AS m(type text, ref bigint, role text)
+                        UNION ALL
+                        SELECT rm.rel_id, rm.mode, rm.state, rm.ref, rm.name, m.type AS member_type, m.ref AS member_id
+                        FROM route_members rm
+                        JOIN pt_route_relations child_r ON rm.member_type = 'r' AND rm.member_id = child_r.id,
+                        LATERAL jsonb_to_recordset(child_r.members) AS m(type text, ref bigint, role text)
+                    )
+                    SELECT member_type, member_id, mode, state, ref, name FROM route_members
+                ) rm
+                JOIN pt_route_ways w ON rm.member_type = 'w' AND rm.member_id = w.id
+                ) as data
+    -
+        id: pt_lines_text
+        Datasource:
+            type: postgis
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            geometry_field: geom
+            geometry_table: pt_lines
+            table: |
+                (SELECT geom, mode, state, ref, name FROM pt_lines WHERE ref IS NOT NULL
+                UNION ALL
+                SELECT w.geom, rm.mode, rm.state, rm.ref, rm.name
+                FROM (
+                    WITH RECURSIVE route_members AS (
+                        SELECT r.id AS rel_id, r.mode, r.state, r.ref, r.name, m.type AS member_type, m.ref AS member_id
+                        FROM pt_route_relations r,
+                        LATERAL jsonb_to_recordset(r.members) AS m(type text, ref bigint, role text)
+                        UNION ALL
+                        SELECT rm.rel_id, rm.mode, rm.state, rm.ref, rm.name, m.type AS member_type, m.ref AS member_id
+                        FROM route_members rm
+                        JOIN pt_route_relations child_r ON rm.member_type = 'r' AND rm.member_id = child_r.id,
+                        LATERAL jsonb_to_recordset(child_r.members) AS m(type text, ref bigint, role text)
+                    )
+                    SELECT member_type, member_id, mode, state, ref, name FROM route_members
+                ) rm
+                JOIN pt_route_ways w ON rm.member_type = 'w' AND rm.member_id = w.id
+                WHERE rm.ref IS NOT NULL) as data
+    -
+        id: pt_stations_point
+        Datasource:
+            type: postgis
+            dbname: "$PGDATABASE"
+            host: "$PGHOST"
+            user: "$PGUSER"
+            password: "$PGPASSWORD"
+            table: "(select * from pt_nodes order by prio desc) as data"
+
+Stylesheet:
+    - style.mss

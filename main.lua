@@ -25,7 +25,8 @@ handle:close()
 for _, func in ipairs({
     "process_node", "process_way", "process_relation",
     "process_untagged_node", "process_untagged_way", "process_untagged_relation",
-    "process_deleted_node", "process_deleted_way", "process_deleted_relation"
+    "process_deleted_node", "process_deleted_way", "process_deleted_relation",
+    "select_relation_members"
 }) do
     local handlers = {}
     for _, processor in pairs(processors) do
@@ -35,9 +36,45 @@ for _, func in ipairs({
     end
 
     if #handlers > 0 then
-        osm2pgsql[func] = function(object)
-            for _, handler in ipairs(handlers) do
-                handler(object)
+        if func == 'select_relation_members' then
+            osm2pgsql[func] = function(relation)
+                local combined_nodes, combined_ways = {}, {}
+                local seen_nodes, seen_ways = {}, {}
+
+                for _, handler in ipairs(handlers) do
+                    local result = handler(relation)
+
+                    if result then
+                        if result.nodes then
+                            for _, node_id in ipairs(result.nodes) do
+                                if not seen_nodes[node_id] then
+                                    seen_nodes[node_id] = true
+                                    table.insert(combined_nodes, node_id)
+                                end
+                            end
+                        end
+
+                        if result.ways then
+                            for _, way_id in ipairs(result.ways) do
+                                if not seen_ways[way_id] then
+                                    seen_ways[way_id] = true
+                                    table.insert(combined_ways, way_id)
+                                end
+                            end
+                        end
+                    end
+                end
+
+                return {
+                    nodes = combined_nodes,
+                    ways = combined_ways
+                }
+            end
+        else
+            osm2pgsql[func] = function(object)
+                for _, handler in ipairs(handlers) do
+                    handler(object)
+                end
             end
         end
     end

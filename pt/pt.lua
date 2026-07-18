@@ -42,8 +42,18 @@ local pt_route_relations = osm2pgsql.define_relation_table('pt_route_relations',
     { column = 'mode', type = 'text' },
     { column = 'state', type = 'text' },
     { column = 'ref', type = 'text' },
-    { column = 'name', type = 'text' },
-    { column = 'members', type = 'jsonb' }
+    { column = 'name', type = 'text' }
+})
+
+local pt_route_members = osm2pgsql.define_table({
+    name = 'pt_route_members',
+    columns = {
+        { column = 'relation_id', type = 'bigint', not_null = true },
+        { column = 'sequence_id', type = 'integer', not_null = true },
+        { column = 'member_type', type = 'text', not_null = true }, -- 'w', 'r', or 'n'
+        { column = 'member_id', type = 'bigint', not_null = true },
+        { column = 'role', type = 'text' }
+    }
 })
 
 ---@param tags tags
@@ -59,7 +69,7 @@ local function get_line_mode(tags)
     if route == 'aerialway' then return 'aerialway' end
     if route == 'bus' or line == 'bus' then return 'bus' end
 
-    local is_rail = (route == 'train' or route == 'railway' or line == 'rail')
+    local is_rail = (route == 'train' or line == 'rail') -- or route == 'railway'
     local is_light_rail = (route == 'light_rail' or line == 'light_rail')
     if is_light_rail or (is_rail and ref:match('^S') ~= nil) then return 'sbahn'
     elseif is_rail then return 'fbahn' end
@@ -138,18 +148,23 @@ function M.process_relation(object)
     if object.tags.type == 'route' then
         local mode = get_line_mode(object.tags)
         if mode then
-            local members = {}
-            for _, member in ipairs(object.members) do
-                table.insert(members, { type = member.type, ref = member.ref, role = member.role })
-            end
             pt_route_relations:insert({
                 id = object.id,
                 mode = mode,
                 state = object.tags.state,
                 ref = object.tags.ref,
-                name = object.tags.name,
-                members = members
+                name = object.tags.name
             })
+
+            for index, member in ipairs(object.members) do
+                pt_route_members:insert({
+                    relation_id = object.id,
+                    sequence_id = index,
+                    member_type = member.type,
+                    member_id = member.ref,
+                    role = member.role
+                })
+            end
         end
     end
 end
